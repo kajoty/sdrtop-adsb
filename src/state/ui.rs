@@ -305,6 +305,10 @@ impl UiState {
         self.section == crate::signal::net::SECTION
     }
 
+    pub fn is_adsb_section(&self) -> bool {
+        self.section == crate::signal::adsb::SECTION
+    }
+
     pub fn is_lab_mode(&self) -> bool {
         self.active_preset.starts_with("lab_")
     }

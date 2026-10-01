@@ -29,6 +29,7 @@ impl App {
             user_presets,
             presets_dir,
             net_admitted,
+            true,
             crate::hardware::AcquisitionKind::IqSamples,
         )
         .expect("built-in IQ layouts must include a usable preset")
@@ -44,6 +45,7 @@ impl App {
         user_presets: &HashMap<String, crate::config::PresetConfig>,
         presets_dir: Option<&std::path::Path>,
         net_admitted: bool,
+        adsb_admitted: bool,
         acquisition: crate::hardware::AcquisitionKind,
     ) -> anyhow::Result<(ui::LayoutEngine, FocusKeys)> {
         let mut registry = ui::PanelRegistry::new();
@@ -90,12 +92,18 @@ impl App {
         registry.register(ui::NetCoexistPanel);
         registry.register(ui::NetDecodeHealthPanel);
         registry.register(ui::NetOccupancyPanel);
+        registry.register(ui::AdsbFramesPanel);
 
         let mut layout = LayoutConfig::with_user_presets(user_presets, presets_dir);
         if !net_admitted {
             layout
                 .presets
                 .retain(|_, p| p.section.as_deref() != Some(ui::menu::model::NET));
+        }
+        if !adsb_admitted || acquisition != crate::hardware::AcquisitionKind::IqSamples {
+            layout
+                .presets
+                .retain(|_, p| p.section.as_deref() != Some(ui::menu::model::ADSB));
         }
         let mut warnings = Self::filter_incompatible_layouts(&mut layout, &registry, acquisition)?;
         // Harvested against the presets that will actually be offered, user
@@ -903,6 +911,7 @@ mod tests {
             &user,
             None,
             false,
+            false,
             crate::hardware::AcquisitionKind::PowerTrace,
         )
         .unwrap();
@@ -944,6 +953,7 @@ mod tests {
             &HashMap::new(),
             None,
             false,
+            false,
             crate::hardware::AcquisitionKind::IqSamples,
         )
         .unwrap();
@@ -958,6 +968,7 @@ mod tests {
             &HashMap::new(),
             None,
             false,
+            false,
             crate::hardware::AcquisitionKind::PowerTrace,
         )
         .unwrap();
@@ -971,6 +982,7 @@ mod tests {
             "command_rail",
             &HashMap::new(),
             None,
+            false,
             false,
             crate::hardware::AcquisitionKind::PowerTrace,
         )
@@ -1144,6 +1156,7 @@ mod tests {
             "spectrum_waterfall",
             &user,
             None,
+            false,
             false,
             crate::hardware::AcquisitionKind::PowerTrace,
         )
